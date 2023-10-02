@@ -68,9 +68,10 @@ public class RedisStore extends MapBasedDataStore {
  			logger.error(ExceptionUtils.getStackTrace(e));
  		} 
 	}
+	@Override
+	public void close(boolean deleteDB,String appName){
 
-
-
+	}
 
 	@Override
 	public void close(boolean deleteDB) {

@@ -86,7 +86,8 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	private IClusterNotifier clusterNotifier;
 
 
-	private Queue<String> currentApplicationCreationProcesses = new ConcurrentLinkedQueue<>();
+	static public Queue<String> currentApplicationCreationProcesses = new ConcurrentLinkedQueue<>();
+	static public Queue<String> currentDeletionCreationProcesses = new ConcurrentLinkedQueue<>();
 
 	@Override
 	public boolean appStart(IScope app) {
@@ -321,7 +322,12 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	}
 
 	public boolean createApplication(String appName, String warFileFullPath) {
+		if(currentDeletionCreationProcesses.contains(appName)){
+			System.out.println("Application Cannot be created as it is currently being deleted ");
+			return false;
+		}
 		currentApplicationCreationProcesses.add(appName);
+
 		boolean success = false;
 		logger.info("Running create app script, war file name (null if default): {}, app name: {} ", warFileFullPath, appName);
 
@@ -413,6 +419,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 
 		if (appScope != null) 
 		{
+			currentDeletionCreationProcesses.add(appName);
 			getApplicationAdaptor(appScope).stopApplication(deleteDB);
 
 			success = runDeleteAppScript(appName);

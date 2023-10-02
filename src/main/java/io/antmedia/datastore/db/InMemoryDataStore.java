@@ -242,7 +242,10 @@ public class InMemoryDataStore extends DataStore {
 		}
 		return streamsList;
 	}
+	@Override
+	public void close(boolean deleteDB,String appName){
 
+	}
 	@Override
 	public void close(boolean deleteDB) {
 		//no need to implement 

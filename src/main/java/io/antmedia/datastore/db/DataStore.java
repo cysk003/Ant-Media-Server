@@ -220,12 +220,15 @@ public abstract class DataStore {
 	public abstract boolean removeEndpoint(String id, Endpoint endpoint, boolean checkRTMPUrl);
 	
 	public abstract List<Broadcast> getExternalStreamsList();
-	
+
 	/**
 	 * Closes the database
 	 * @param deleteDB if it's true, it also deletes the db and closes
+	 * @param appName application Name
 	 */
 	public abstract void close(boolean deleteDB);
+
+	public abstract void close(boolean deleteDB, String appName);
 
 	/**
 	 * Returns the VoD List in order

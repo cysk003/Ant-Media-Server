@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import io.antmedia.console.AdminApplication;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.kafka.clients.admin.Admin;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
@@ -91,7 +93,11 @@ public class MapDBStore extends MapBasedDataStore {
 	}
 
 	@Override
-	public void close(boolean deleteDB) {
+	public void close(boolean deleteDB){
+
+	}
+	@Override
+	public void close(boolean deleteDB, String appName) {
 		//get db file before closing. They can be used in delete method
 		Iterable<String> dbFiles = db.getStore().getAllFiles();
 		synchronized (this) {
@@ -99,7 +105,10 @@ public class MapDBStore extends MapBasedDataStore {
 			db.commit();
 			available = false;
 			db.close();
+			System.out.println("-----------------------------");
+			AdminApplication.currentDeletionCreationProcesses.remove(appName);
 		}
+
 
 		if (deleteDB) 
 		{

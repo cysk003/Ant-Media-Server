@@ -419,17 +419,17 @@ public class ConsoleAppRestServiceTest{
 		});
 	}
 
-	@Test
-	public void testCreateApp() 
+	public void CreateApp(final String appName)
 	{
 
 		Applications applications = getApplications();
 		int appCount = applications.applications.length;
-
-		String appName = RandomString.make(20);
+		// Create application is in Awaitility because previous application with same name might not be deleted
 		log.info("app:{} will be created", appName);
-		Result result = createApplication(appName);
-		assertTrue(result.isSuccess());
+		Awaitility.await().atMost(30, TimeUnit.SECONDS).pollInterval(3, TimeUnit.SECONDS)
+				.until(() ->  {
+					return createApplication(appName).isSuccess();
+				});
 
 		Awaitility.await().atMost(30, TimeUnit.SECONDS).pollInterval(3, TimeUnit.SECONDS)
 		.until(() ->  {
@@ -437,9 +437,10 @@ public class ConsoleAppRestServiceTest{
 			return tmpApplications.applications.length == appCount + 1;
 		});
 
-
-		result = deleteApplication(appName);
-		assertTrue(result.isSuccess());
+		Awaitility.await().atMost(30, TimeUnit.SECONDS).pollInterval(3, TimeUnit.SECONDS)
+				.until(() ->  {
+					return deleteApplication(appName).isSuccess();
+				});
 
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS)
 		.until(() ->  {
@@ -451,7 +452,7 @@ public class ConsoleAppRestServiceTest{
 
 		//just wait for 5+ seconds to make sure cluster is synched
 		Awaitility.await().pollInterval(6, TimeUnit.SECONDS).until(() -> true);
-		result = createApplication(appName);
+		Result result = createApplication(appName);
 		assertTrue(result.isSuccess());
 
 		Awaitility.await().atMost(30, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS)
@@ -459,15 +460,24 @@ public class ConsoleAppRestServiceTest{
 			Applications tmpApplications = getApplications();
 			return tmpApplications.applications.length == appCount + 1;
 		});
-		result = deleteApplication(appName);
-		assertTrue(result.isSuccess());
 
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS)
+				.until(() ->  {
+					return deleteApplication(appName).isSuccess();
+				});
+
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(50, TimeUnit.MILLISECONDS)
 		.until(() ->  {
 			Applications tmpApplications = getApplications();
 			return tmpApplications.applications.length == appCount;
 		});
 
+	}
+	@Test
+	public void testRecreateApp(){
+		String appName = RandomString.make(20);
+		CreateApp(appName);
+		CreateApp(appName);
 	}
 
 	/**

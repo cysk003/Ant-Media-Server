@@ -1193,7 +1193,7 @@ public class AntMediaApplicationAdapter  extends MultiThreadedApplicationAdapter
 
 		createShutdownFile(getScope().getName());
 
-		vertx.setTimer(ClusterNode.NODE_UPDATE_PERIOD, l-> getDataStore().close(deleteDB));
+		vertx.setTimer(ClusterNode.NODE_UPDATE_PERIOD, l-> getDataStore().close(deleteDB,getScope().getName()));
 
 	}
 

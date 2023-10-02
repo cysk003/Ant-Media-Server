@@ -449,6 +449,10 @@ public class MongoStore extends DataStore {
 		}
 		return null;
 	}
+	@Override
+	public void close(boolean deleteDB,String appName){
+
+	}
 
 	@Override
 	public void close(boolean deleteDB) {
