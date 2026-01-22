@@ -547,7 +547,6 @@ public class StreamFetcherManager {
 					logger.info("Auto-stopping playlist {} because no viewers are watching", streamScheduler.getStreamId());
 					stopPlayList(streamScheduler.getStreamId());
 				}
-				// Skip other processing for playlists (no restart logic)
 				continue;
 			}
 
@@ -555,13 +554,6 @@ public class StreamFetcherManager {
 			if (restart || broadcast == null ||
 					(autoStop = isToBeStoppedAutomatically(broadcast)))
 			{
-				//logic of If condition is
-				
-				// stop it if it's restart = true 
-				//   or 
-				// brodcast == null because it means stream is deleted
-				//  or
-				// autoStop
 				
 				logger.info("Calling stop stream {} due to restart -> {}, broadcast is null -> {}, auto stop because no viewer -> {}", 
 						streamScheduler.getStreamId(), restart, broadcast == null, autoStop);

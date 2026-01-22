@@ -171,9 +171,6 @@ public class WebSocketCommunityHandler {
 	/**
 	 * Handles PLAY_COMMAND and GET_STREAM_INFO_COMMAND with auto-start support.
 	 * If autoStartStopEnabled is true and stream is not running, it will start the stream.
-	 *
-	 * This method is designed to be overridden by enterprise edition for actual WebRTC playback.
-	 *
 	 * @param cmd the command (PLAY_COMMAND or GET_STREAM_INFO_COMMAND)
 	 * @param streamId the stream ID
 	 * @param session the WebSocket session
@@ -188,11 +185,8 @@ public class WebSocketCommunityHandler {
 
 		String status = broadcast.getStatus();
 
-		// If stream is already broadcasting, do nothing - let enterprise handler deal with playback
-		// Enterprise edition overrides this method and handles the actual WebRTC playback
 		if (IAntMediaStreamHandler.BROADCAST_STATUS_BROADCASTING.equals(status)) {
 			// Pass through - enterprise will handle actual playback
-			// Community edition does nothing here, enterprise overrides this method
 			return;
 		}
 
@@ -202,7 +196,6 @@ public class WebSocketCommunityHandler {
 			sendStreamingStartsSoonMessage(streamId, session);
 			return;
 		}
-		logger.info("******************************* type: {}, autoStartStopEnabled: {}", broadcast.getType(), broadcast.isAutoStartStopEnabled());
 		// Stream exists but not streaming - check if auto-start is enabled
 		if (broadcast.isAutoStartStopEnabled() && isAutoStartStopStreamType(broadcast.getType())) {
 			logger.info("WebRTC play request for stream:{} with autoStartStopEnabled=true. Starting stream.", streamId);
