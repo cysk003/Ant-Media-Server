@@ -540,15 +540,20 @@ public class StreamFetcherManager {
 
 			//get the updated broadcast object
 			Broadcast broadcast = datastore.get(streamScheduler.getStreamId());
-			
-			if  (broadcast != null && AntMediaApplicationAdapter.PLAY_LIST.equals(broadcast.getType())) {
-				//if it's playlist, continue
+
+			if (broadcast != null && AntMediaApplicationAdapter.PLAY_LIST.equals(broadcast.getType())) {
+				// For playlists, only check auto-stop if autoStartStopEnabled is true
+				if (broadcast.isAutoStartStopEnabled() && isToBeStoppedAutomatically(broadcast)) {
+					logger.info("Auto-stopping playlist {} because no viewers are watching", streamScheduler.getStreamId());
+					stopPlayList(streamScheduler.getStreamId());
+				}
+				// Skip other processing for playlists (no restart logic)
 				continue;
 			}
-			
+
 			boolean autoStop = false;
-			if (restart || broadcast == null || 
-					(autoStop = isToBeStoppedAutomatically(broadcast))) 
+			if (restart || broadcast == null ||
+					(autoStop = isToBeStoppedAutomatically(broadcast)))
 			{
 				//logic of If condition is
 				

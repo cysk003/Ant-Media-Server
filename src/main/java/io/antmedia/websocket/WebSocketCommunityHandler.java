@@ -23,6 +23,7 @@ import io.antmedia.StreamIdValidator;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.muxer.IAntMediaStreamHandler;
 import io.antmedia.settings.ServerSettings;
+import io.antmedia.rest.model.Result;
 import io.antmedia.webrtc.adaptor.RTMPAdaptor;
 import jakarta.websocket.Session;
 
@@ -153,9 +154,9 @@ public class WebSocketCommunityHandler {
 			else if (cmd.equals(WebSocketConstants.PING_COMMAND)) {
 				sendPongMessage(session);
 			}
-			else if (cmd.equals(WebSocketConstants.GET_STREAM_INFO_COMMAND) || cmd.equals(WebSocketConstants.PLAY_COMMAND)) 
+			else if (cmd.equals(WebSocketConstants.GET_STREAM_INFO_COMMAND) || cmd.equals(WebSocketConstants.PLAY_COMMAND))
 			{
-				sendNotFoundJSON(streamId, session);
+				handlePlayOrGetStreamInfoCommand(cmd, streamId, session);
 			}
 			
 
@@ -166,7 +167,69 @@ public class WebSocketCommunityHandler {
 		}
 
 	}
-		
+
+	/**
+	 * Handles PLAY_COMMAND and GET_STREAM_INFO_COMMAND with auto-start support.
+	 * If autoStartStopEnabled is true and stream is not running, it will start the stream.
+	 *
+	 * This method is designed to be overridden by enterprise edition for actual WebRTC playback.
+	 *
+	 * @param cmd the command (PLAY_COMMAND or GET_STREAM_INFO_COMMAND)
+	 * @param streamId the stream ID
+	 * @param session the WebSocket session
+	 */
+	protected void handlePlayOrGetStreamInfoCommand(String cmd, String streamId, Session session) {
+		Broadcast broadcast = appAdaptor.getDataStore().get(streamId);
+
+		if (broadcast == null) {
+			sendNotFoundJSON(streamId, session);
+			return;
+		}
+
+		String status = broadcast.getStatus();
+
+		// If stream is already broadcasting, do nothing - let enterprise handler deal with playback
+		// Enterprise edition overrides this method and handles the actual WebRTC playback
+		if (IAntMediaStreamHandler.BROADCAST_STATUS_BROADCASTING.equals(status)) {
+			// Pass through - enterprise will handle actual playback
+			// Community edition does nothing here, enterprise overrides this method
+			return;
+		}
+
+		// If stream is preparing (starting up), notify client to wait
+		if (IAntMediaStreamHandler.BROADCAST_STATUS_PREPARING.equals(status)) {
+			logger.info("WebRTC play request for stream:{} which is currently preparing", streamId);
+			sendStreamingStartsSoonMessage(streamId, session);
+			return;
+		}
+		logger.info("******************************* type: {}, autoStartStopEnabled: {}", broadcast.getType(), broadcast.isAutoStartStopEnabled());
+		// Stream exists but not streaming - check if auto-start is enabled
+		if (broadcast.isAutoStartStopEnabled() && isAutoStartStopStreamType(broadcast.getType())) {
+			logger.info("WebRTC play request for stream:{} with autoStartStopEnabled=true. Starting stream.", streamId);
+			sendStreamingStartsSoonMessage(streamId, session);
+
+			Result result = appAdaptor.startStreaming(broadcast);
+			if (!result.isSuccess()) {
+				logger.warn("Failed to auto-start stream:{} reason:{}", streamId, result.getMessage());
+			}
+		} else {
+			sendNotFoundJSON(streamId, session);
+		}
+	}
+
+	/**
+	 * Checks if the broadcast type supports auto-start/stop functionality.
+	 * Only IP cameras, stream sources, VODs, and playlists can be auto-started.
+	 *
+	 * @param type the broadcast type
+	 * @return true if the broadcast type supports auto-start/stop
+	 */
+	protected boolean isAutoStartStopStreamType(String type) {
+		return AntMediaApplicationAdapter.IP_CAMERA.equals(type) ||
+			   AntMediaApplicationAdapter.STREAM_SOURCE.equals(type) ||
+			   AntMediaApplicationAdapter.VOD.equals(type) ||
+			   AntMediaApplicationAdapter.PLAY_LIST.equals(type);
+	}
 
 	private void startRTMPAdaptor(Session session, final String streamId, boolean enableVideo) {
 		int rtmpPort = appAdaptor.getServerSettings().getRtmpPort();

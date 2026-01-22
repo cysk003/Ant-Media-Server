@@ -38,6 +38,8 @@ import io.antmedia.AppSettings;
 import io.antmedia.datastore.db.DataStore;
 import io.antmedia.datastore.db.InMemoryDataStore;
 import io.antmedia.datastore.db.types.Broadcast;
+import io.antmedia.muxer.IAntMediaStreamHandler;
+import io.antmedia.rest.model.Result;
 import io.antmedia.settings.ServerSettings;
 import io.antmedia.webrtc.adaptor.RTMPAdaptor;
 import io.antmedia.websocket.WebSocketCommunityHandler;
@@ -773,5 +775,159 @@ public class WebSocketCommunityHandlerTest {
 
         assertFalse(WebRTCUtils.validateSdpMediaPayloads(sdp));
     }
+
+	@Test
+	public void testPlayCommandWithAutoStartEnabled() {
+		// Setup broadcast with autoStartStopEnabled=true
+		String streamId = "testStream" + (int)(Math.random()*10000);
+		Broadcast broadcast = new Broadcast();
+		try {
+			broadcast.setStreamId(streamId);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+		broadcast.setAutoStartStopEnabled(true);
+		broadcast.setType(AntMediaApplicationAdapter.STREAM_SOURCE);
+		broadcast.setStreamUrl("rtsp://example.com/stream");
+		dataStore.save(broadcast);
+
+		// Mock startStreaming
+		AntMediaApplicationAdapter adaptor = (AntMediaApplicationAdapter) appContext.getBean("web.handler");
+		when(adaptor.startStreaming(Mockito.any(Broadcast.class))).thenReturn(new Result(true));
+
+		// Send play command
+		JSONObject playCommand = new JSONObject();
+		playCommand.put(WebSocketConstants.COMMAND, WebSocketConstants.PLAY_COMMAND);
+		playCommand.put(WebSocketConstants.STREAM_ID, streamId);
+
+		wsHandler.onMessage(session, playCommand.toJSONString());
+
+		// Verify streaming_starts_soon was sent
+		verify(wsHandler).sendStreamingStartsSoonMessage(streamId, session);
+
+		// Verify startStreaming was called
+		verify(adaptor).startStreaming(Mockito.any(Broadcast.class));
+	}
+
+	@Test
+	public void testPlayCommandWithAutoStartDisabled() {
+		// Setup broadcast with autoStartStopEnabled=false
+		String streamId = "testStream" + (int)(Math.random()*10000);
+		Broadcast broadcast = new Broadcast();
+		try {
+			broadcast.setStreamId(streamId);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+		broadcast.setAutoStartStopEnabled(false);
+		broadcast.setType(AntMediaApplicationAdapter.STREAM_SOURCE);
+		dataStore.save(broadcast);
+
+		// Send play command
+		JSONObject playCommand = new JSONObject();
+		playCommand.put(WebSocketConstants.COMMAND, WebSocketConstants.PLAY_COMMAND);
+		playCommand.put(WebSocketConstants.STREAM_ID, streamId);
+
+		wsHandler.onMessage(session, playCommand.toJSONString());
+
+		// Verify 404 was sent
+		verify(wsHandler).sendNotFoundJSON(streamId, session);
+	}
+
+	@Test
+	public void testPlayCommandWithStreamPreparing() {
+		// Setup broadcast that is already preparing
+		String streamId = "testStream" + (int)(Math.random()*10000);
+		Broadcast broadcast = new Broadcast();
+		try {
+			broadcast.setStreamId(streamId);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+		broadcast.setAutoStartStopEnabled(true);
+		broadcast.setType(AntMediaApplicationAdapter.STREAM_SOURCE);
+		broadcast.setStatus(IAntMediaStreamHandler.BROADCAST_STATUS_PREPARING);
+		// Set updateTime to recent time - required for getStatus() to return PREPARING
+		// (see Broadcast.getStatus() which checks updateTime for BROADCASTING/PREPARING status)
+		broadcast.setUpdateTime(System.currentTimeMillis());
+		dataStore.save(broadcast);
+
+		AntMediaApplicationAdapter adaptor = (AntMediaApplicationAdapter) appContext.getBean("web.handler");
+
+		// Send play command
+		JSONObject playCommand = new JSONObject();
+		playCommand.put(WebSocketConstants.COMMAND, WebSocketConstants.PLAY_COMMAND);
+		playCommand.put(WebSocketConstants.STREAM_ID, streamId);
+
+		wsHandler.onMessage(session, playCommand.toJSONString());
+
+		// Verify streaming_starts_soon was sent
+		verify(wsHandler).sendStreamingStartsSoonMessage(streamId, session);
+
+		// Verify startStreaming was NOT called (already starting)
+		verify(adaptor, Mockito.never()).startStreaming(Mockito.any(Broadcast.class));
+	}
+
+	@Test
+	public void testPlayCommandWithLiveStreamType() {
+		// Setup liveStream type (should NOT auto-start)
+		String streamId = "testStream" + (int)(Math.random()*10000);
+		Broadcast broadcast = new Broadcast();
+		try {
+			broadcast.setStreamId(streamId);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+		broadcast.setAutoStartStopEnabled(true);
+		broadcast.setType(AntMediaApplicationAdapter.LIVE_STREAM);
+		dataStore.save(broadcast);
+
+		// Send play command
+		JSONObject playCommand = new JSONObject();
+		playCommand.put(WebSocketConstants.COMMAND, WebSocketConstants.PLAY_COMMAND);
+		playCommand.put(WebSocketConstants.STREAM_ID, streamId);
+
+		wsHandler.onMessage(session, playCommand.toJSONString());
+
+		// Verify 404 was sent (liveStream can't be auto-started)
+		verify(wsHandler).sendNotFoundJSON(streamId, session);
+	}
+
+	@Test
+	public void testPlayCommandWithStreamBroadcasting() {
+		// Setup broadcast that is already broadcasting
+		String streamId = "testStream" + (int)(Math.random()*10000);
+		Broadcast broadcast = new Broadcast();
+		try {
+			broadcast.setStreamId(streamId);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+		broadcast.setType(AntMediaApplicationAdapter.STREAM_SOURCE);
+		broadcast.setStatus(IAntMediaStreamHandler.BROADCAST_STATUS_BROADCASTING);
+		// Set updateTime to recent time - required for getStatus() to return BROADCASTING
+		// (see Broadcast.getStatus() which checks updateTime for BROADCASTING/PREPARING status)
+		broadcast.setUpdateTime(System.currentTimeMillis());
+		dataStore.save(broadcast);
+
+		AntMediaApplicationAdapter adaptor = (AntMediaApplicationAdapter) appContext.getBean("web.handler");
+
+		// Send play command
+		JSONObject playCommand = new JSONObject();
+		playCommand.put(WebSocketConstants.COMMAND, WebSocketConstants.PLAY_COMMAND);
+		playCommand.put(WebSocketConstants.STREAM_ID, streamId);
+
+		wsHandler.onMessage(session, playCommand.toJSONString());
+
+		// Verify nothing was sent (pass through for enterprise to handle)
+		verify(wsHandler, Mockito.never()).sendNotFoundJSON(Mockito.anyString(), Mockito.any());
+		verify(wsHandler, Mockito.never()).sendStreamingStartsSoonMessage(Mockito.anyString(), Mockito.any());
+		verify(adaptor, Mockito.never()).startStreaming(Mockito.any(Broadcast.class));
+	}
 
 }
