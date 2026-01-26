@@ -1251,7 +1251,11 @@ public abstract class RestServiceBase {
 		return String.format("%s/webapps/%s/%s", System.getProperty("red5.root"), appScopeName, "streams");
 	}
 
-	protected Result uploadVoDFile(String fileName, InputStream inputStream) {
+	public Result uploadVoDFile(String fileName, InputStream inputStream) {
+		return uploadVoDFile(fileName, inputStream, null);
+	}
+
+	public Result uploadVoDFile(String fileName, InputStream inputStream, String metadata) {
 		boolean success = false;
 		String message = "";
 		String id= null;
@@ -1310,6 +1314,10 @@ public abstract class RestServiceBase {
 
 						VoD newVod = new VoD(fileName, "file", relativePath, fileName, unixTime, 0, Muxer.getDurationInMs(savedFile,fileName), fileSize,
 								VoD.UPLOADED_VOD, vodId, null);
+
+						if (StringUtils.isNotBlank(metadata)) {
+							newVod.setMetadata(metadata);
+						}
 
 						if (StringUtils.isNotBlank(vodUploadFinishScript)) {
 							newVod.setProcessStatus(VoD.PROCESS_STATUS_INQUEUE);
