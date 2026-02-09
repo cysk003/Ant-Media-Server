@@ -18,11 +18,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
-<<<<<<< HEAD
-=======
 import java.io.IOException;
 import java.net.InetAddress;
->>>>>>> origin/master
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
@@ -3828,7 +3825,6 @@ public class BroadcastRestServiceV2UnitTest {
 		}
 
 	}
-<<<<<<< HEAD
 	@Test
 	public void validateStreamURL(){
 		class TestRestBase extends RestServiceBase {
@@ -3845,7 +3841,6 @@ public class BroadcastRestServiceV2UnitTest {
 		TestRestBase testRestBase = new TestRestBase();
 		testRestBase.testValidateStreamUrl();
 	}
-=======
 	
 	@Test
 	public void testDeleteLocalHLSFiles() throws IOException {
@@ -3896,7 +3891,6 @@ public class BroadcastRestServiceV2UnitTest {
 		listener.progressChanged(progressEvent);
 		
 		verify(storageClient, times(1)).deleteMultipleFiles(any(), any());
->>>>>>> origin/master
 
 		
 	}
