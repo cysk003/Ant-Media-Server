@@ -1,6 +1,4 @@
 package io.antmedia.test;
-
-<<<<<<< HEAD
 import static io.antmedia.muxer.IAntMediaStreamHandler.*;
 import static io.antmedia.muxer.MuxAdaptor.getExtendedSubfolder;
 import static io.antmedia.muxer.MuxAdaptor.getSubfolder;
@@ -182,30 +180,7 @@ import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.*;
-import java.lang.ref.WeakReference;
-import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-<<<<<<< HEAD
-import io.antmedia.AntMediaApplicationAdapter;
-import io.antmedia.AppSettings;
-import io.antmedia.EncoderSettings;
-import io.antmedia.RecordType;
-import io.antmedia.datastore.db.DataStore;
-import io.antmedia.datastore.db.DataStoreFactory;
-import io.antmedia.datastore.db.InMemoryDataStore;
-import io.antmedia.datastore.db.types.Broadcast;
-import io.antmedia.datastore.db.types.BroadcastUpdate;
-import io.antmedia.datastore.db.types.Endpoint;
-import io.antmedia.datastore.db.types.VoD;
-import io.antmedia.eRTMP.HEVCDecoderConfigurationParser.HEVCSPSParser;
-import io.antmedia.eRTMP.HEVCVideoEnhancedRTMP;
-import io.antmedia.integration.AppFunctionalV2Test;
-import io.antmedia.integration.MuxingTest;
 import io.antmedia.muxer.HLSMuxer;
 import io.antmedia.muxer.IAntMediaStreamHandler;
 import io.antmedia.muxer.Mp4Muxer;
@@ -214,23 +189,6 @@ import io.antmedia.muxer.Muxer;
 import io.antmedia.muxer.RecordMuxer;
 import io.antmedia.muxer.EndpointMuxer;
 import io.antmedia.muxer.WebMMuxer;
-import io.antmedia.muxer.parser.AACConfigParser;
-import io.antmedia.muxer.parser.AACConfigParser.AudioObjectTypes;
-import io.antmedia.muxer.parser.SPSParser;
-import io.antmedia.muxer.parser.codec.AACAudio;
-import io.antmedia.plugin.PacketFeeder;
-import io.antmedia.plugin.api.IPacketListener;
-import io.antmedia.plugin.api.StreamParametersInfo;
-import io.antmedia.rest.model.Result;
-import io.antmedia.storage.AmazonS3StorageClient;
-import io.antmedia.storage.StorageClient;
-import io.antmedia.test.eRTMP.HEVCDecoderConfigurationParserTest;
-import io.antmedia.test.utils.VideoInfo;
-import io.antmedia.test.utils.VideoProber;
-import io.antmedia.websocket.WebSocketConstants;
-import io.vertx.core.Vertx;
-import static io.antmedia.muxer.MuxAdaptor.getExtendedSubfolder;
-import static io.antmedia.muxer.MuxAdaptor.getSubfolder;
 import static org.bytedeco.ffmpeg.global.avcodec.*;
 import static org.bytedeco.ffmpeg.global.avformat.*;
 import static org.bytedeco.ffmpeg.global.avutil.*;
