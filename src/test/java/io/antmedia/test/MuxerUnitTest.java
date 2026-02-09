@@ -61,7 +61,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-<<<<<<< HEAD
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -81,9 +80,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import io.antmedia.*;
-=======
 import java.lang.reflect.Field;
->>>>>>> origin/master
 import com.google.gson.JsonObject;
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
@@ -1411,7 +1408,7 @@ public class MuxerUnitTest extends AbstractJUnit4SpringContextTests {
 		appScope = (WebScope) applicationContext.getBean("web.scope");
 		vertx = (Vertx) appScope.getContext().getApplicationContext().getBean(IAntMediaStreamHandler.VERTX_BEAN_NAME);
 
-		EndpointMuxer rtmpMuxer = new RtmpMuxer("rtmp://no_server", vertx);
+		EndpointMuxer rtmpMuxer = new EndpointMuxer("rtmp://no_server", vertx);
 		rtmpMuxer.init(appScope, "test", 0, null, 0);
 
 		AVCodecParameters codecParameters = new AVCodecParameters();
@@ -1431,7 +1428,7 @@ public class MuxerUnitTest extends AbstractJUnit4SpringContextTests {
 		assertTrue(rtmpMuxer.prepareIO()); // can prepare again
 
 		// 2. Test cancelOpenIO race protection
-		EndpointMuxer rtmpMuxer2 = new RtmpMuxer("rtmp://no_server", vertx);
+		EndpointMuxer rtmpMuxer2 = new EndpointMuxer("rtmp://no_server", vertx);
 		rtmpMuxer2.init(appScope, "test", 0, null, 0);
 		assertTrue(rtmpMuxer2.addStream(codecParameters, rat, 50));
 
@@ -1454,7 +1451,7 @@ public class MuxerUnitTest extends AbstractJUnit4SpringContextTests {
 		appScope = (WebScope) applicationContext.getBean("web.scope");
 		vertx = (Vertx) appScope.getContext().getApplicationContext().getBean(IAntMediaStreamHandler.VERTX_BEAN_NAME);
 
-		EndpointMuxer rtmpMuxer = new RtmpMuxer("rtmp://no_server", vertx);
+		EndpointMuxer rtmpMuxer = new EndpointMuxer("rtmp://no_server", vertx);
 		rtmpMuxer.init(appScope, "test", 0, null, 0);
 
 		// No header written yet
