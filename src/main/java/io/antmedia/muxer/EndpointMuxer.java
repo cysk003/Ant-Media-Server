@@ -53,6 +53,7 @@ public class EndpointMuxer extends Muxer {
 	boolean keyFrameReceived = false;
 
 	private AtomicBoolean preparedIO = new AtomicBoolean(false);
+	private AtomicBoolean cancelOpenIO = new AtomicBoolean(false);
 
 	public String muxerType = null;
 
@@ -156,12 +157,12 @@ public class EndpointMuxer extends Muxer {
 			return false;
 		}
 		preparedIO.set(true);
+		cancelOpenIO.set(false);
 		boolean result = false;
 		//if there is a stream in the output format context, try to push
 		if (getOutputFormatContext().nb_streams() > 0) 
 		{
 			this.vertx.executeBlocking(() -> {
-	
 				if (openIO())
 				{
 					if (bsfFilterContextList.isEmpty())
@@ -169,8 +170,12 @@ public class EndpointMuxer extends Muxer {
 						writeHeader();
 						return null;
 					}
-					isRunning.set(true);
-					setStatus(IAntMediaStreamHandler.BROADCAST_STATUS_BROADCASTING);
+					if (!exitIfCancelled())
+					{
+						isRunning.set(true);
+						setStatus(IAntMediaStreamHandler.BROADCAST_STATUS_BROADCASTING);
+					}
+
 				}
 				else
 				{
@@ -178,10 +183,8 @@ public class EndpointMuxer extends Muxer {
 					setStatus(IAntMediaStreamHandler.BROADCAST_STATUS_FAILED);
 					logger.error("Cannot initializeOutputFormatContextIO for {} endpoint:{}", muxerType ,url);
 				}
-				
+
 				return null;
-				
-				
 			}, false);
 			
 			result = true;
@@ -225,12 +228,14 @@ public class EndpointMuxer extends Muxer {
 	 */
 	@Override
 	public synchronized void writeTrailer() {
+		cancelOpenIO.set(true);
 		if(headerWritten){
 			super.writeTrailer();
 			trailerWritten = true;
 		}
 		else{
 			logger.info("Not writing trailer because header is not written yet");
+			clearResource();
 		}
 		setStatus(IAntMediaStreamHandler.BROADCAST_STATUS_FINISHED);
 	}
@@ -238,6 +243,9 @@ public class EndpointMuxer extends Muxer {
 	@Override
 	public synchronized void clearResource() {
 		super.clearResource();
+		if (!headerWritten) {
+			preparedIO.set(false);
+		}
 		/**
 		 *  Don't free the allocatedExtraDataPointer because it's internally deallocated
 		 *
@@ -248,6 +256,15 @@ public class EndpointMuxer extends Muxer {
 		 */
 
 		//allocatedExtraDataPointer is freed when the context is closing
+	}
+
+	private boolean exitIfCancelled() {
+		if (!cancelOpenIO.get()) {
+			return false;
+		}
+		logger.info("RTMP muxer openIO cancelled for {}", url);
+		clearResource();
+		return true;
 	}
 
 	/**
