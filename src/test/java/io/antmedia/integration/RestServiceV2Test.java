@@ -568,6 +568,10 @@ public class RestServiceV2Test {
 
 
 	public static Result callUploadVod(File file) throws Exception {
+		return callUploadVod(file, null);
+	}
+
+	public static Result callUploadVod(File file, String metadata) throws Exception {
 
 		String url = ROOT_SERVICE_URL + "/v2/vods/create?name=" + file.getName();
 		HttpClient client = HttpClients.custom().setRedirectStrategy(new LaxRedirectStrategy()).build();
@@ -579,6 +583,10 @@ public class RestServiceV2Test {
 		FileBody fileBody = new FileBody(file) ;
 
 		builder.addPart("file", fileBody);
+
+		if (metadata != null) {
+			builder.addTextBody("metadata", metadata);
+		}
 
 		HttpEntity entity = builder.build();
 		post.setEntity(entity);
@@ -1161,7 +1169,21 @@ public class RestServiceV2Test {
 		//file should be deleted
 		assertFalse(MuxingTest.isURLAvailable("http://" + SERVER_ADDR + ":5080/LiveApp/streams/" + vodId + ".mp4"));
 
+		// Test upload with metadata
+		String testMetadata = "{\"customField\":\"testValue\"}";
+		try {
+			result = callUploadVod(file, testMetadata);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		assertTrue(result.isSuccess());
+		String vodIdWithMetadata = result.getMessage();
 
+		VoD vodWithMetadata = callGetVoD(vodIdWithMetadata);
+		assertNotNull(vodWithMetadata);
+		assertEquals(testMetadata, vodWithMetadata.getMetadata());
+
+		deleteVoD(vodIdWithMetadata);
 
 	}
 
