@@ -2148,6 +2148,45 @@ public class DBStoresUnitTest {
 		vodList = dataStore.getVodList(0, 50, null, null, null, "vassdfsdgs");
 		assertEquals(0, vodList.size());
 
+		// Test search by metadata
+		VoD vodWithMetadata = new VoD("metaStream", "meta123" + (int)(Math.random() * 1000), "path", "metaVodName", 1517239908, 123, 17933, 1190425, VoD.STREAM_VOD, "metaVodId" + (int)(Math.random() * 91000), null);
+		vodWithMetadata.setMetadata("team=A,event=championship");
+		dataStore.addVod(vodWithMetadata);
+
+		vodList = dataStore.getVodList(0, 50, null, null, null, "team=A");
+		assertEquals(1, vodList.size());
+		assertEquals(vodWithMetadata.getVodId(), vodList.get(0).getVodId());
+
+		vodList = dataStore.getVodList(0, 50, null, null, null, "championship");
+		assertEquals(1, vodList.size());
+		assertEquals(vodWithMetadata.getVodId(), vodList.get(0).getVodId());
+
+		partialVodNumber = dataStore.getPartialVodNumber("team=A");
+		assertEquals(1, partialVodNumber);
+
+		// Test search by description
+		VoD vodWithDescription = new VoD("descStream", "desc123" + (int)(Math.random() * 1000), "path", "descVodName", 1517239908, 123, 17933, 1190425, VoD.STREAM_VOD, "descVodId" + (int)(Math.random() * 91000), null);
+		vodWithDescription.setDescription("Important recorded segment from Event B");
+		dataStore.addVod(vodWithDescription);
+
+		vodList = dataStore.getVodList(0, 50, null, null, null, "Event B");
+		assertEquals(1, vodList.size());
+		assertEquals(vodWithDescription.getVodId(), vodList.get(0).getVodId());
+
+		vodList = dataStore.getVodList(0, 50, null, null, null, "recorded segment");
+		assertEquals(1, vodList.size());
+		assertEquals(vodWithDescription.getVodId(), vodList.get(0).getVodId());
+
+		partialVodNumber = dataStore.getPartialVodNumber("Event B");
+		assertEquals(1, partialVodNumber);
+
+		// Test case insensitive search for metadata and description
+		vodList = dataStore.getVodList(0, 50, null, null, null, "TEAM=A");
+		assertEquals(1, vodList.size());
+
+		vodList = dataStore.getVodList(0, 50, null, null, null, "event b");
+		assertEquals(1, vodList.size());
+
 	}
 
 
