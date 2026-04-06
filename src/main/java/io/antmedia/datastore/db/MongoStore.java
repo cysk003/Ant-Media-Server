@@ -1256,15 +1256,6 @@ public class MongoStore extends DataStore {
 				String cacheKey = getBroadcastCacheKey(streamId);
 				Broadcast cachedBroadcast = getBroadcastCache().get(cacheKey, Broadcast.class);
 
-				if(cachedBroadcast != null) {
-					if(fieldName.equals(WEBRTC_VIEWER_COUNT)) {
-						cachedBroadcast.setWebRTCViewerCount(cachedBroadcast.getWebRTCViewerCount() + (increment ? 1 : -1));
-					}
-					else if(fieldName.equals(RTMP_VIEWER_COUNT)) {
-						cachedBroadcast.setRtmpViewerCount(cachedBroadcast.getRtmpViewerCount() + (increment ? 1 : -1));
-					}
-				}
-
 				Query<Broadcast> query = datastore.find(Broadcast.class).filter(Filters.eq(STREAM_ID, streamId));
 
 				if(!increment) {
@@ -1280,6 +1271,15 @@ public class MongoStore extends DataStore {
 				}
 
 				result = updateResult.getModifiedCount() == 1;
+
+				if(result && cachedBroadcast != null) {
+					if(fieldName.equals(WEBRTC_VIEWER_COUNT)) {
+						cachedBroadcast.setWebRTCViewerCount(cachedBroadcast.getWebRTCViewerCount() + (increment ? 1 : -1));
+					}
+					else if(fieldName.equals(RTMP_VIEWER_COUNT)) {
+						cachedBroadcast.setRtmpViewerCount(cachedBroadcast.getRtmpViewerCount() + (increment ? 1 : -1));
+					}
+				}
 
 			} catch (Exception e) {
 				logger.error(e.getMessage());
