@@ -1722,7 +1722,7 @@ public class DBStoresUnitTest {
 		assertTrue(result, "Should  successfully remove endpoint by URL");
 
 		broadcast2 = dataStore.get(streamId);
-		assertTrue(broadcast2.getEndPointList() == null || broadcast2.getEndPointList().size() == 0, 
+		assertTrue(broadcast2.getEndPointList() == null || broadcast2.getEndPointList().size() == 0,
 			"endPointList should be empty or null after removal");
 
 		// Test Case 7: Successfully remove endpoint by ServiceId
@@ -1742,7 +1742,7 @@ public class DBStoresUnitTest {
 
 		broadcast2 = dataStore.get(streamId);
 		assertEquals(1, broadcast2.getEndPointList().size(), "Should have 1 endpoint remaining");
-		assertEquals("service-002", broadcast2.getEndPointList().get(0).getEndpointServiceId(), 
+		assertEquals("service-002", broadcast2.getEndPointList().get(0).getEndpointServiceId(),
 			"Remaining endpoint should have service-002");
 
 		// Test Case 8: Remove last endpoint
@@ -1750,7 +1750,7 @@ public class DBStoresUnitTest {
 		assertTrue(result, "Should successfully remove last endpoint");
 
 		broadcast2 = dataStore.get(streamId);
-		assertTrue(broadcast2.getEndPointList() == null || broadcast2.getEndPointList().size() == 0, 
+		assertTrue(broadcast2.getEndPointList() == null || broadcast2.getEndPointList().size() == 0,
 			"endPointList should be empty or null after removing last endpoint");
 	}
 
@@ -3471,19 +3471,17 @@ public class DBStoresUnitTest {
 		String dbName = "deleteMapdb";
 		MongoStore dataStore = new MongoStore(mongoUri(), dbName);
 
-		MongoClient client = MongoClients.create(dataStore.getMongoConnectionUri(mongoUri()));
+		try (MongoClient client = MongoClients.create(dataStore.getMongoConnectionUri("127.0.0.1"))) {
+			ArrayList<String> dbNames = new ArrayList<String>();
+			client.listDatabaseNames().forEach(c-> dbNames.add(c));
+			assertTrue(dbNames.contains(dbName));
 
+			dataStore.close(true);
 
-		ArrayList<String> dbNames = new ArrayList<String>();
-		client.listDatabaseNames().forEach(c-> dbNames.add(c));
-		assertTrue(dbNames.contains(dbName));
-
-		dataStore.close(true);
-
-		dbNames.clear();
-		client.listDatabaseNames().forEach(c-> dbNames.add(c));
-		assertFalse(dbNames.contains(dbName));
-		client.close();
+			dbNames.clear();
+			client.listDatabaseNames().forEach(c-> dbNames.add(c));
+			assertFalse(dbNames.contains(dbName));
+		}
 
 	}
 
