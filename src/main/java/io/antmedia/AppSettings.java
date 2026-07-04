@@ -40,7 +40,7 @@ import io.antmedia.muxer.Muxer;
  * Application Settings for each application running in Ant Media Server.
  * Each setting should have a default value with @Value annotation. Otherwise it breaks compatibility 
  *
- * These settings are set for each applications and stored in the file <AMS_DIR>/webapps/<AppName>/WEB_INF/red5-web.properties.
+ * These settings are set for each applications and stored in the file {@code <AMS_DIR>/webapps/<AppName>/WEB_INF/red5-web.properties}.
  * Click on any field to see its default value.
  *
  * @author mekya
@@ -147,7 +147,7 @@ public class AppSettings implements Serializable{
 	private String remoteAllowedCIDR = "127.0.0.1";
 
 	/**
-	 * It's mandatory, If it is set true then a mp4 file is created into <APP_DIR>/streams directory
+	 * It's mandatory, If it is set true then a mp4 file is created into {@code <APP_DIR>/streams} directory
 	 * Default value is false
 	 */
 	@Value("${mp4MuxingEnabled:false}")
@@ -169,13 +169,6 @@ public class AppSettings implements Serializable{
 
 	/**
 	 * The format of output mp4 and ts files. Generates an extended filename based on the given parameters and file name format.
-	 *
-	 * @param name            The base name of the file (e.g., "stream1")
-	 * @param resolution      The resolution of the video (e.g., 240, 480, 720)
-	 * @param bitrate         The bitrate of the video in kbps
-	 * @param fileNameFormat  The format string for the file name (e.g., "%r%b", "{customText}%r%b", "%r{customText}%b", "%b%r{customText}")
-	 * @return                The extended file name
-	 *
 	 * This method constructs an extended file name by appending various components based on the provided format:
 	 * - {customText}: Appends any custom text enclosed in curly braces
 	 * - %r: Appends the resolution (if non-zero) followed by 'p' (e.g., "720p")
@@ -204,7 +197,7 @@ public class AppSettings implements Serializable{
 
 	/**
 	 * Enable/disable hls recording
-	 * If it is set true then HLS files are created into <APP_DIR>/streams and HLS playing is enabled,
+	 * If it is set true then HLS files are created into {@code <APP_DIR>/streams} and HLS playing is enabled,
 	 * Default value is true
 	 */
 	@Value("${hlsMuxingEnabled:true}")
@@ -285,9 +278,13 @@ public class AppSettings implements Serializable{
 	private int endpointHealthCheckPeriodMs=2000;
 
 	/**
-	 * This limit is for republishing to a certain endpoint for how many times
+	 * This limit is for republishing to a certain endpoint for how many times.
 	 * For example in case we tried to republish 3 times and still got an error
-	 * We conclude that the endpoint is dead and close it.
+	 * we conclude that the endpoint is dead and close it.
+	 *
+	 * Set to a negative value (e.g. -1) to retry indefinitely. Useful when the
+	 * remote endpoint may have long outages and the operator wants the source
+	 * to keep reconnecting until it comes back.
 	 */
 	@Value ( "${endpointRepublishLimit:3}" )
 	private int endpointRepublishLimit=3;
@@ -524,7 +521,7 @@ public class AppSettings implements Serializable{
 	/**
 	 * It's mandatory,
 	 * This determines the period (milliseconds) of preview (png, jpg) file creation,
-	 * This file is created into <APP_DIR>/preview directory. Default value is 5000.
+	 * This file is created into {@code <APP_DIR>/preview} directory. Default value is 5000.
 	 */
 
 	@Value( "${createPreviewPeriod:5000}" )
@@ -851,8 +848,7 @@ public class AppSettings implements Serializable{
 
 	/**
 	 * rtt measurement threshold diff if rttMeasurement is bigger than this value in ExcessiveBandwidth
-	 * algorithm, it switches back to lower quality without try every attempts {@link #setTryCountBeforeSwitchback(int)}
-	 * @param rttMeasurementDiffThresholdForSwitchback
+	 * algorithm, it switches back to lower quality without trying every attempt.
 	 */
 	@Value("${rttMeasurementDiffThresholdForSwitchback:20}")
 	private int rttMeasurementDiffThresholdForSwitchback=20;
@@ -916,11 +912,11 @@ public class AppSettings implements Serializable{
 	 * It can have string or integer values. 
 	 * One value can be given at a time as string. It can be udp, tcp udp_multicast, http, https
 	 * Multiple values can be given at a time by OR operation 
-	 * udp -> 1 << 0 = 1
-	 * tcp -> 1 << 1 = 2
-	 * udp_multicast -> 1 << 2 = 4
-	 * http -> 1 << 8 = 256
-	 * https -> 1 << 9 = 512
+	 * udp: {@code 1 << 0 = 1}
+	 * tcp: {@code 1 << 1 = 2}
+	 * udp_multicast: {@code 1 << 2 = 4}
+	 * http: {@code 1 << 8 = 256}
+	 * https: {@code 1 << 9 = 512}
 	 *
 	 * Default value is 3 which is udp(1) OR tcp(2)
 	 * 0x01 | 0x10 = 0x11 = 3
@@ -1511,6 +1507,15 @@ public class AppSettings implements Serializable{
 	private boolean hwScalingEnabled = false;
 
 	/**
+	 * Enable hardware-accelerated video decoding (h264_cuvid on NVIDIA GPUs).
+	 * When disabled, the software decoder is used instead.
+	 * Disable this if you experience PTS or stuttering issues with h264_cuvid on certain GPU architectures (e.g. Blackwell RTX 5000 series).
+	 * Default value is true.
+	 */
+	@Value("${hwDecoderEnabled:true}")
+	private boolean hwDecoderEnabled = true;
+
+	/**
 	 * Firebase Service Account Key JSON to send push notification
 	 * through Firebase Cloud Messaging
 	 */
@@ -1823,6 +1828,7 @@ public class AppSettings implements Serializable{
 			encoderJSON.put(EncoderSettings.VIDEO_BITRATE, encoderSettings.getVideoBitrate());
 			encoderJSON.put(EncoderSettings.AUDIO_BITRATE, encoderSettings.getAudioBitrate());
 			encoderJSON.put(EncoderSettings.FORCE_ENCODE, encoderSettings.isForceEncode());
+			encoderJSON.put(EncoderSettings.FORCE_SAME_RESOLUTION_ENCODE, encoderSettings.isForceSameResolutionEncode());
 			jsonArray.add(encoderJSON);
 		}
 		return jsonArray.toJSONString();
@@ -1837,6 +1843,8 @@ public class AppSettings implements Serializable{
 		int videoBitrate;
 		int audioBitrate;
 		boolean forceEncode;
+		boolean forceSameResolutionEncode;
+
 		List<EncoderSettings> encoderSettingsList = new ArrayList<>();
 
 		try {
@@ -1849,8 +1857,9 @@ public class AppSettings implements Serializable{
 				height = Integer.parseInt(jsObject.get(EncoderSettings.RESOLUTION_HEIGHT).toString());
 				videoBitrate = Integer.parseInt(jsObject.get(EncoderSettings.VIDEO_BITRATE).toString());
 				audioBitrate = Integer.parseInt(jsObject.get(EncoderSettings.AUDIO_BITRATE).toString());
-				forceEncode = (boolean)jsObject.get(EncoderSettings.FORCE_ENCODE);
-				encoderSettingsList.add(new EncoderSettings(height,videoBitrate,audioBitrate,forceEncode));
+				forceEncode = getBooleanValue(jsObject, EncoderSettings.FORCE_ENCODE, true);
+				forceSameResolutionEncode = getBooleanValue(jsObject, EncoderSettings.FORCE_SAME_RESOLUTION_ENCODE, false);
+				encoderSettingsList.add(new EncoderSettings(height,videoBitrate,audioBitrate,forceEncode, forceSameResolutionEncode));
 			}
 		}
 		catch (ParseException e) {
@@ -1869,6 +1878,11 @@ public class AppSettings implements Serializable{
 			}
 		}
 		return encoderSettingsList;
+	}
+
+	private static boolean getBooleanValue(JSONObject jsObject, String key, boolean defaultValue) {
+		Object value = jsObject.get(key);
+		return value instanceof Boolean ? (Boolean) value : defaultValue;
 	}
 
 	public String getEncoderSettingsString() {
@@ -3019,6 +3033,14 @@ public class AppSettings implements Serializable{
 
 	public void setHwScalingEnabled(boolean hwScalingEnabled) {
 		this.hwScalingEnabled = hwScalingEnabled;
+	}
+
+	public boolean isHwDecoderEnabled() {
+		return hwDecoderEnabled;
+	}
+
+	public void setHwDecoderEnabled(boolean hwDecoderEnabled) {
+		this.hwDecoderEnabled = hwDecoderEnabled;
 	}
 
 	public String getFirebaseAccountKeyJSON() {
