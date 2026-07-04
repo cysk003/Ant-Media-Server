@@ -1367,26 +1367,10 @@ public class MuxAdaptor implements IRecordingListener, IEndpointStatusListener {
 					enableVideo = codecInfo.hasVideo();
 					enableAudio = codecInfo.hasAudio();
 
-					// audioDisabled: handle the stream as video-only. enableAudio is
-					// forced false so the whole pipeline (decoders, encoders, muxers)
-					// follows the standard video-only path
-					boolean audioDisabled = getAppSettings().isDisableAudio();
-					if (audioDisabled) {
-						enableAudio = false;
-					}
-
-					getVideoDataConf(codecInfo);
-					getAudioDataConf(codecInfo);
-
-					// Sometimes AAC Sequenece Header is received later
-					// so that we check if we get the audio codec parameters correctly
-
-					boolean readyToPrepare = audioDisabled
-							? (enableVideo && getVideoCodecParameters() != null)
-							: (enableVideo && enableAudio && getAudioCodecParameters() != null);
+					boolean readyToPrepare = isStreamReadyToPrepare(codecInfo);
 
 					if (readyToPrepare) {
-						logger.info("Stream is ready to prepare - stream:{} enableVideo:{} enableAudio:{} audioDisabled:{} queue size:{}", streamId, enableVideo, enableAudio, audioDisabled, queueSize.get());
+						logger.info("Stream is ready to prepare - stream:{} enableVideo:{} enableAudio:{} audioDisabled:{} queue size:{}", streamId, enableVideo, enableAudio, getAppSettings().isDisableAudio(), queueSize.get());
 						prepareParameters();
 					}
 					else {
@@ -1480,6 +1464,24 @@ public class MuxAdaptor implements IRecordingListener, IEndpointStatusListener {
 				isPipeReaderJobRunning.compareAndSet(true, false);
 			}
 		}
+	}
+
+	public boolean isStreamReadyToPrepare(IStreamCodecInfo codecInfo) {
+		// Handle the stream as video-only when audio is disabled so the whole
+		// pipeline follows the standard video-only path.
+		boolean audioDisabled = getAppSettings().isDisableAudio();
+		if (audioDisabled) {
+			enableAudio = false;
+		}
+
+		getVideoDataConf(codecInfo);
+		getAudioDataConf(codecInfo);
+
+		// Sometimes the AAC sequence header is received later, so make sure the
+		// required codec parameters are available before preparing the stream.
+		return audioDisabled
+				? enableVideo && getVideoCodecParameters() != null
+				: enableVideo && enableAudio && getAudioCodecParameters() != null;
 	}
 	
 	public void clearAndStopStream() {
@@ -2985,4 +2987,3 @@ public class MuxAdaptor implements IRecordingListener, IEndpointStatusListener {
 
 
 }
-

@@ -146,6 +146,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.red5.codec.AbstractVideo;
 import org.red5.codec.IAudioStreamCodec;
+import org.red5.codec.IStreamCodecInfo;
 import org.red5.codec.IVideoStreamCodec;
 import org.red5.codec.StreamCodecInfo;
 import org.red5.io.ITag;
@@ -2684,6 +2685,46 @@ public class MuxerUnitTest extends AbstractJUnit4SpringContextTests {
 			ITag audioTag = new Tag((byte) Constants.TYPE_AUDIO_DATA, 0, 10, IoBuffer.allocate(10), BUFFER_SIZE);
 			muxAdaptor.packetReceived(clientBroadcastStream, new StreamPacket(audioTag));
 			assertEquals(1, muxAdaptor.getInputQueueSize());
+		} finally {
+			settings.setDisableAudio(original);
+		}
+	}
+
+	@Test
+	public void testIsStreamReadyToPrepare() {
+		if (appScope == null) {
+			appScope = (WebScope) applicationContext.getBean("web.scope");
+			assertEquals(1, appScope.getDepth());
+		}
+
+		AppSettings settings = getAppSettings();
+		boolean original = settings.isDisableAudio();
+		try {
+			IStreamCodecInfo codecInfo = mock(IStreamCodecInfo.class);
+			MuxAdaptor muxAdaptor = spy(MuxAdaptor.initializeMuxAdaptor(null, null, false, appScope));
+			doReturn(settings).when(muxAdaptor).getAppSettings();
+			doNothing().when(muxAdaptor).getVideoDataConf(codecInfo);
+
+			AVCodecParameters videoCodecParameters = mock(AVCodecParameters.class);
+			AVCodecParameters audioCodecParameters = mock(AVCodecParameters.class);
+			doReturn(videoCodecParameters).when(muxAdaptor).getVideoCodecParameters();
+
+			settings.setDisableAudio(false);
+			muxAdaptor.setEnableVideo(true);
+			muxAdaptor.setEnableAudio(true);
+			doReturn(null).when(muxAdaptor).getAudioCodecParameters();
+			assertFalse(muxAdaptor.isStreamReadyToPrepare(codecInfo));
+
+			doReturn(audioCodecParameters).when(muxAdaptor).getAudioCodecParameters();
+			assertTrue(muxAdaptor.isStreamReadyToPrepare(codecInfo));
+
+			settings.setDisableAudio(true);
+			muxAdaptor.setEnableAudio(true);
+			assertTrue(muxAdaptor.isStreamReadyToPrepare(codecInfo));
+			assertFalse(muxAdaptor.isEnableAudio());
+
+			doReturn(null).when(muxAdaptor).getVideoCodecParameters();
+			assertFalse(muxAdaptor.isStreamReadyToPrepare(codecInfo));
 		} finally {
 			settings.setDisableAudio(original);
 		}
