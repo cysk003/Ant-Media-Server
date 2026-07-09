@@ -4,8 +4,7 @@ name: Ant Media Server Community Edition Test
 on:
   push:
     branches:
-      - master
-      - main
+      - '**'
     tags:
       - 'ams-v*'
   pull_request:
