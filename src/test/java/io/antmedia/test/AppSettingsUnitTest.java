@@ -702,7 +702,7 @@ public class AppSettingsUnitTest {
 		//When a new field is added or removed please update the number of fields and make this test pass
 		//by also checking its default value. 
 
-		assertEquals(185, 
+		assertEquals(186,
 				numberOfFields, "New field is added to settings. PAY ATTENTION: Please CHECK ITS DEFAULT VALUE and fix the number of fields.");
 	}
 
