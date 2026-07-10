@@ -15,7 +15,6 @@ public class ScopeList implements IScopeListener {
 
     private final CopyOnWriteArrayList<IScope> scopes = new CopyOnWriteArrayList<>();
 
-
     @Override
     public void notifyScopeCreated(IScope scope) {
         scopes.add(scope);

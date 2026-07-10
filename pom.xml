@@ -77,6 +77,10 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
 	        **/*.yml,
 	        **/*.yaml
 	    </sonar.exclusions>
+        <sonar.coverage.exclusions>
+            <!-- Spring Java configuration is not measured intentionally -->
+            **/io/antmedia/config/*Configuration.java
+        </sonar.coverage.exclusions>
     </properties>
 
     <build>
@@ -551,6 +555,12 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
             <version>${awaitility.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.27.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>

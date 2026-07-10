@@ -2,7 +2,6 @@ package io.antmedia.component;
 
 import java.beans.PropertyEditor;
 import java.beans.PropertyEditorSupport;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,8 +9,6 @@ import com.google.common.base.Strings;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.CustomEditorConfigurer;
 import org.springframework.context.annotation.Bean;
 

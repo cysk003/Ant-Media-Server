@@ -318,7 +318,7 @@ public class AppSettings implements Serializable {
 	private String targetLatency="3.5";
 
 	/**
-	 * DASH window size, Number of files in manifest
+	 * DASH window size, number of files in manifest
 	 */
 	@Value ( "${dashWindowSize:5}" )
 	private String dashWindowSize="5";
@@ -330,23 +330,19 @@ public class AppSettings implements Serializable {
 	private String dashExtraWindowSize="5";
 
 	/**
-	 * Enable low latency dash, This settings is effective if dash is enabled
+	 * Enable low latency DASH, this setting is effective if DASH is enabled
 	 */
 	@Value ( "${dashEnableLowLatency:true}" )
-	@Getter(AccessLevel.NONE)
-	@Setter(AccessLevel.NONE)
 	private boolean lLDashEnabled=true;
 
 	/**
-	 * Enable low latency hls via dash muxer, LLHLS is effective if dash is enabled.
+	 * Enable low latency HLS via DASH muxer, LL-HLS is effective if DASH is enabled.
 	 */
 	@Value ( "${hlsEnableLowLatency:false}" )
-	@Getter(AccessLevel.NONE)
-	@Setter(AccessLevel.NONE)
 	private boolean lLHLSEnabled=false;
 
 	/**
-	 * Enable hls through DASH muxer, LLHLS is effective if dash is enabled.
+	 * Enable hls through DASH muxer, LL-HLS is effective if dash is enabled.
 	 */
 	@Value ( "${hlsEnabledViaDash:false}" )
 	private boolean hlsEnabledViaDash=false;
@@ -1466,7 +1462,7 @@ public class AppSettings implements Serializable {
 	 * In initialization no matter if spring or field definition is effective, the important thing is that having some random value
 	 */
 	@Value("${clusterCommunicationKey:#{ T(org.apache.commons.lang3.RandomStringUtils).randomAlphanumeric(32)}}")
-	private String clusterCommunicationKey = RandomStringUtils.randomAlphanumeric(32);
+	private String clusterCommunicationKey = RandomStringUtils.secure().nextAlphanumeric(32);
 
 	/**
 	 * Enables the ID3 Tag support for HLS
@@ -1533,7 +1529,7 @@ public class AppSettings implements Serializable {
 	 *
 	 */
 	@Value("${subscriberAuthenticationKey:#{ T(org.apache.commons.lang3.RandomStringUtils).randomAlphanumeric(32)}}")
-	private String subscriberAuthenticationKey = RandomStringUtils.randomAlphanumeric(32);
+	private String subscriberAuthenticationKey = RandomStringUtils.secure().nextAlphanumeric(32);
 
 
 	/**
@@ -1568,7 +1564,7 @@ public class AppSettings implements Serializable {
 	private int webhookRetryCount = 0;
 
 	/**
-	 * If it's false, jwt token should be send in analytic events to the AnalyticsEventLogger.
+	 * If it's false, jwt token should be sent in analytic events to the AnalyticsEventLogger.
 	 * It uses {@link AppSettings#jwtSecretKey} for the secret key
 	 */
 	@Value("${secureAnalyticEndpoint:false}")
@@ -1581,7 +1577,7 @@ public class AppSettings implements Serializable {
 	private long webhookRetryDelay = 1000;
 	
 	/**
-	 * The period that server send stream status to the webhook
+	 * The period that server sends stream status to the webhook
 	 * Default value is -1 which means disabled. 
 	 * 
 	 * Consume the webhook as soon as possible and don't make it wait.
@@ -1634,7 +1630,7 @@ public class AppSettings implements Serializable {
 
 	/**
 	 * Relay RTMP metadata to muxers. It's true by default
-	 * RTMP can have metadata and it can be used for playback synchronization.
+	 * RTMP can have metadata, and it can be used for playback synchronization.
 	 *
 	 * If it's true, Ant Media Server relays the metadata to muxers. 
 	 * Currently, HLSMuxer supports this feature through {@link Muxer#writeMetaData(String, long)}
@@ -1780,10 +1776,6 @@ public class AppSettings implements Serializable {
 		return value instanceof Boolean ? (Boolean) value : defaultValue;
 	}
 
-	public String getEncoderSettingsString() {
-		return encoderSettingsString;
-	}
-
 	public List<EncoderSettings> getEncoderSettings() {
 		return encodersStr2List(encoderSettingsString);
 	}
@@ -1823,23 +1815,6 @@ public class AppSettings implements Serializable {
 		ingestingStreamLimit = -1;
 		recordingSubfolder = null;
 	}
-
-	public boolean islLDashEnabled() {
-		return lLDashEnabled;
-	}
-
-	public void setlLDashEnabled(boolean lLDashEnabled) {
-		this.lLDashEnabled = lLDashEnabled;
-	}
-
-	public boolean islLHLSEnabled() {
-		return lLHLSEnabled;
-	}
-
-	public void setlLHLSEnabled(boolean lLHLSEnabled) {
-		this.lLHLSEnabled = lLHLSEnabled;
-	}
-
 
 	public synchronized String getRemoteAllowedCIDR() {
 		return remoteAllowedCIDR;

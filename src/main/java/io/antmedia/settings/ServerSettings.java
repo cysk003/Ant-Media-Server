@@ -446,7 +446,7 @@ public class ServerSettings implements ApplicationContextAware, Serializable {
 			}
 			long diff = System.currentTimeMillis() - startTime;
 			if (diff > 1000) {
-				logger.warn("Getting host address took {}ms. it's cached now and will return immediately from now on. You can "
+				logger.warn("Getting host adress took {}ms. it's cached now and will return immediately from now on. You can "
 						+ " alternatively set serverName in conf/red5.properties file ", diff);
 			}
 		}
@@ -470,8 +470,8 @@ public class ServerSettings implements ApplicationContextAware, Serializable {
 		}
 		else {
 			//************************************
-			//this method may sometimes takes long to return
-			//delaying initialization may cause some after issues
+			//this method sometimes may take long to return
+			//delaying initialization may cause some issues afterwards
 			hostAddress = getLocalHostAddress();
 			logger.info("Using local host address is {}", hostAddress);
 		}
