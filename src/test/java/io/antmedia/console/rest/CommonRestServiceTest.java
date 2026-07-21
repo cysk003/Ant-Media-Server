@@ -1,6 +1,7 @@
 package io.antmedia.console.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +21,24 @@ import io.antmedia.test.UnitTestBase;
 
 @Tag("fast")
 class CommonRestServiceTest extends UnitTestBase<CommonRestService> {
+
+	@Test
+	void shouldSkipSpringInjectionWhenDependenciesAreAlreadyInjected() {
+		AbstractConsoleDataStore dataStore = mock(AbstractConsoleDataStore.class);
+		ConsoleDataStoreFactory dataStoreFactory = mock(ConsoleDataStoreFactory.class);
+		when(dataStoreFactory.getDataStore()).thenReturn(dataStore);
+		classUnderTest = new CommonRestService();
+		classUnderTest.setDataStoreFactory(dataStoreFactory);
+
+		assertThatCode(classUnderTest::initializeSpringDependencies).doesNotThrowAnyException();
+	}
+
+	@Test
+	void shouldSkipSpringInjectionWithoutServletContext() {
+		classUnderTest = new CommonRestService();
+
+		assertThatCode(classUnderTest::initializeSpringDependencies).doesNotThrowAnyException();
+	}
 
 	@Test
 	void shouldInjectSpringDependenciesIntoJerseyManagedInstance() {
