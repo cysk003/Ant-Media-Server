@@ -38,6 +38,8 @@ import org.red5.server.Launcher;
 import org.red5.server.api.scope.IScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
@@ -45,6 +47,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.common.annotations.VisibleForTesting;
 
 import ch.qos.logback.classic.Level;
 import io.antmedia.AntMediaApplicationAdapter;
@@ -136,8 +139,6 @@ public class CommonRestService {
 
 	private static final String LICENSE_STATUS = "license";
 
-	protected ApplicationContext applicationContext;
-
 	@Context
 	private ServletContext servletContext;
 
@@ -147,9 +148,11 @@ public class CommonRestService {
 	private ConsoleDataStoreFactory dataStoreFactory;
 	private ServerSettings serverSettings;
 
-	private ILicenceService licenceService;
+	private Optional<ILicenceService> licenceService = Optional.empty();
 
 	private IStatsCollector statsCollector;
+
+	private AdminApplication application;
 
 	private static final int BLOCKED_LOGIN_TIMEOUT_SECS = 300 ; // in seconds
 
@@ -1152,15 +1155,13 @@ public class CommonRestService {
 	}
 
 
-	public IStatsCollector getStatsCollector () {
-		if(statsCollector == null) 
-		{
-			WebApplicationContext ctxt =getContext();
-			if (ctxt != null) {
-				statsCollector = (IStatsCollector)ctxt.getBean(IStatsCollector.BEAN_NAME);
-			}
-		}
+	public IStatsCollector getStatsCollector() {
 		return statsCollector;
+	}
+
+	@Autowired
+	public void setStatsCollector(IStatsCollector statsCollector) {
+		this.statsCollector = Objects.requireNonNull(statsCollector, "Stats collector is not initialized");
 	}
 
 	public ServerSettings getServerSettings() 
@@ -1170,16 +1171,18 @@ public class CommonRestService {
 
 	public Licence getLicenceStatus(@QueryParam("key") String key) 
 	{
-		if(key == null) {
+		ILicenceService service = getLicenceServiceInstance();
+		if(key == null || service == null) {
 			return null;
 		}
-		return getLicenceServiceInstance().checkLicence(key);
+		return service.checkLicence(key);
 	}
 
 
 	public Licence getLicenceStatus() 
 	{
-		return getLicenceServiceInstance().getLastLicenseStatus();
+		ILicenceService service = getLicenceServiceInstance();
+		return service != null ? service.getLastLicenseStatus() : null;
 	}
 
 	/**
@@ -1199,14 +1202,12 @@ public class CommonRestService {
 		return new Result(false, "No application adaptor with this name " + appname);
 	}
 
+	@VisibleForTesting
 	public void setDataStore(AbstractConsoleDataStore dataStore) {
 		this.dataStore = dataStore;
 	}
 
 	public AbstractConsoleDataStore getDataStore() {
-		if (dataStore == null) {
-			dataStore = getDataStoreFactory().getDataStore();
-		}
 		return dataStore;
 	}
 
@@ -1215,52 +1216,43 @@ public class CommonRestService {
 	}
 
 	public ServerSettings getServerSettingsInternal() {
-
-		if(serverSettings == null) 
-		{
-			WebApplicationContext ctxt = getContext();
-			if (ctxt != null) {
-				serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
-			}
-		}
 		return serverSettings;
+	}
+
+	@Autowired
+	public void setServerSettings(ServerSettings serverSettings) {
+		this.serverSettings = Objects.requireNonNull(serverSettings, "Server settings are not initialized");
 	}
 
 
 
-	public ILicenceService getLicenceServiceInstance () {
-		if(licenceService == null) {
+	public ILicenceService getLicenceServiceInstance() {
+		return licenceService.orElse(null);
+	}
 
-			WebApplicationContext ctxt = getContext();
-			if (ctxt != null) {
-				licenceService = (ILicenceService)ctxt.getBean(ILicenceService.BEAN_NAME);
-			}
-		}
-		return licenceService;
+	@Autowired
+	public void setLicenceService(Optional<ILicenceService> licenceService) {
+		this.licenceService = Objects.requireNonNull(licenceService);
 	}
 
 
 	public AdminApplication getApplication() {
-		WebApplicationContext ctxt = getContext();
-		if (ctxt != null) {
-			return (AdminApplication)ctxt.getBean("web.handler");
-		}
-		return null;
+		return application;
+	}
+
+	@Autowired
+	public void setApplication(@Qualifier("web.handler") AdminApplication application) {
+		this.application = Objects.requireNonNull(application, "Admin application is not initialized");
 	}
 
 	public ConsoleDataStoreFactory getDataStoreFactory() {
-		if(dataStoreFactory == null)
-		{
-			WebApplicationContext ctxt = getContext();
-			if (ctxt != null) {
-				dataStoreFactory = (ConsoleDataStoreFactory) ctxt.getBean("dataStoreFactory");
-			}
-		}
 		return dataStoreFactory;
 	}
 
+	@Autowired
 	public void setDataStoreFactory(ConsoleDataStoreFactory dataStoreFactory) {
-		this.dataStoreFactory = dataStoreFactory;
+		this.dataStoreFactory = Objects.requireNonNull(dataStoreFactory, "Console data store factory is not initialized");
+		this.dataStore = Objects.requireNonNull(dataStoreFactory.getDataStore(), "Console data store is not initialized");
 	}
 
 

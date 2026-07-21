@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.google.gson.JsonObject;
@@ -301,76 +302,56 @@ public class ConsoleRestV2UnitTest {
 
 	@Test
 	public void testGetStatsCollector() {
-		RestServiceV2 restServiceSpy = Mockito.spy(restService);
-		Mockito.doReturn(null).when(restServiceSpy).getContext();
+		IStatsCollector statsCollector = Mockito.mock(IStatsCollector.class);
 
-		assertNull(restServiceSpy.getStatsCollector());
-		WebApplicationContext context = Mockito.mock(WebApplicationContext.class);
-		Mockito.doReturn(context).when(restServiceSpy).getContext();
-		Mockito.when(context.getBean(Mockito.anyString())).thenReturn(Mockito.mock(IStatsCollector.class));
+		restService.setStatsCollector(statsCollector);
 
-		assertNotNull(restServiceSpy.getStatsCollector());
-		assertNotNull(restServiceSpy.getStatsCollector());
+		assertEquals(statsCollector, restService.getStatsCollector());
 
 	}
 
 	@Test
 	public void testGetServerSettingsInternal() {
-		RestServiceV2 restServiceSpy = Mockito.spy(restService);
-		Mockito.doReturn(null).when(restServiceSpy).getContext();
+		ServerSettings serverSettings = Mockito.mock(ServerSettings.class);
 
-		assertNull(restServiceSpy.getServerSettingsInternal());
-		WebApplicationContext context = Mockito.mock(WebApplicationContext.class);
-		Mockito.doReturn(context).when(restServiceSpy).getContext();
-		Mockito.when(context.getBean(Mockito.anyString())).thenReturn(Mockito.mock(ServerSettings.class));
+		restService.setServerSettings(serverSettings);
 
-		assertNotNull(restServiceSpy.getServerSettingsInternal());
-		assertNotNull(restServiceSpy.getServerSettingsInternal());
+		assertEquals(serverSettings, restService.getServerSettingsInternal());
+		assertEquals(serverSettings, restService.getServerSettings());
 
 	}
 
 	@Test
 	public void testGetLicenseService() {
-		RestServiceV2 restServiceSpy = Mockito.spy(restService);
-		Mockito.doReturn(null).when(restServiceSpy).getContext();
+		ILicenceService licenceService = Mockito.mock(ILicenceService.class);
+		assertNull(restService.getLicenceStatus());
+		assertNull(restService.getLicenceStatus("licence-key"));
 
-		assertNull(restServiceSpy.getLicenceServiceInstance());
-		WebApplicationContext context = Mockito.mock(WebApplicationContext.class);
-		Mockito.doReturn(context).when(restServiceSpy).getContext();
-		Mockito.when(context.getBean(Mockito.anyString())).thenReturn(Mockito.mock(ILicenceService.class));
+		restService.setLicenceService(Optional.of(licenceService));
 
-		assertNotNull(restServiceSpy.getLicenceServiceInstance());
-		assertNotNull(restServiceSpy.getLicenceServiceInstance());
+		assertEquals(licenceService, restService.getLicenceServiceInstance());
 
 	}
 
 	@Test
 	public void testGetApplication() {
-		RestServiceV2 restServiceSpy = Mockito.spy(restService);
-		Mockito.doReturn(null).when(restServiceSpy).getContext();
+		AdminApplication application = Mockito.mock(AdminApplication.class);
 
-		assertNull(restServiceSpy.getApplication());
-		WebApplicationContext context = Mockito.mock(WebApplicationContext.class);
-		Mockito.doReturn(context).when(restServiceSpy).getContext();
-		Mockito.when(context.getBean(Mockito.anyString())).thenReturn(Mockito.mock(AdminApplication.class));
+		restService.setApplication(application);
 
-		assertNotNull(restServiceSpy.getApplication());
-		assertNotNull(restServiceSpy.getApplication());
+		assertEquals(application, restService.getApplication());
 
 	}
 
 	@Test
 	public void testDataStoreFactory() {
-		RestServiceV2 restServiceSpy = Mockito.spy(restService);
-		Mockito.doReturn(null).when(restServiceSpy).getContext();
+		ConsoleDataStoreFactory dataStoreFactory = Mockito.mock(ConsoleDataStoreFactory.class);
+		Mockito.when(dataStoreFactory.getDataStore()).thenReturn(dbStore);
 
-		assertNull(restServiceSpy.getDataStoreFactory());
-		WebApplicationContext context = Mockito.mock(WebApplicationContext.class);
-		Mockito.doReturn(context).when(restServiceSpy).getContext();
-		Mockito.when(context.getBean(Mockito.anyString())).thenReturn(Mockito.mock(ConsoleDataStoreFactory.class));
+		restService.setDataStoreFactory(dataStoreFactory);
 
-		assertNotNull(restServiceSpy.getDataStoreFactory());
-		assertNotNull(restServiceSpy.getDataStoreFactory());
+		assertEquals(dataStoreFactory, restService.getDataStoreFactory());
+		assertEquals(dbStore, restService.getDataStore());
 
 	}
 
