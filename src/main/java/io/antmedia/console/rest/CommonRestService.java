@@ -42,6 +42,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.google.gson.Gson;
@@ -72,6 +73,7 @@ import io.antmedia.security.SslConfigurator;
 import io.antmedia.settings.ServerSettings;
 import io.antmedia.statistic.IStatsCollector;
 import io.antmedia.statistic.StatsCollector;
+import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
@@ -170,6 +172,13 @@ public class CommonRestService {
 
 	public int getAllowedLoginAttempts() {
 		return ALLOWED_LOGIN_ATTEMPTS;
+	}
+
+	@PostConstruct
+	public void initializeSpringDependencies() {
+		if (dataStoreFactory == null && servletContext != null) {
+			SpringBeanAutowiringSupport.processInjectionBasedOnServletContext(this, servletContext);
+		}
 	}
 
 
