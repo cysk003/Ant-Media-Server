@@ -3,10 +3,17 @@ package io.antmedia.console.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.red5.server.api.scope.IScope;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.context.WebApplicationContext;
@@ -17,10 +24,41 @@ import io.antmedia.console.datastore.AbstractConsoleDataStore;
 import io.antmedia.console.datastore.ConsoleDataStoreFactory;
 import io.antmedia.settings.ServerSettings;
 import io.antmedia.statistic.IStatsCollector;
+import io.antmedia.statistic.StatsCollector;
 import io.antmedia.test.UnitTestBase;
 
 @Tag("fast")
 class CommonRestServiceTest extends UnitTestBase<CommonRestService> {
+
+	@Test
+	void shouldReturnNullAppAdaptorWithoutApplication() {
+		classUnderTest = new CommonRestService();
+
+		assertThat(classUnderTest.getAppAdaptor("app")).isNull();
+	}
+
+	@Test
+	void shouldIncludeApplicationLiveStreamCountInSystemResources() {
+		AdminApplication application = mock(AdminApplication.class);
+		IScope rootScope = mock(IScope.class);
+		IScope appScope = mock(IScope.class);
+		when(application.getRootScope()).thenReturn(rootScope);
+		when(application.getApplications()).thenReturn(List.of("app"));
+		when(rootScope.getScope("app")).thenReturn(appScope);
+		when(application.getAppLiveStreamCount(appScope)).thenReturn(3);
+
+		classUnderTest = new CommonRestService();
+		classUnderTest.setApplication(application);
+
+		try (MockedStatic<StatsCollector> statsCollector = mockStatic(StatsCollector.class)) {
+			statsCollector.when(() -> StatsCollector.getSystemResourcesInfo(org.mockito.ArgumentMatchers.any()))
+					.thenReturn(new JsonObject());
+
+			JsonObject result = JsonParser.parseString(classUnderTest.getSystemResourcesInfo()).getAsJsonObject();
+
+			assertThat(result.get(StatsCollector.TOTAL_LIVE_STREAMS).getAsInt()).isEqualTo(3);
+		}
+	}
 
 	@Test
 	void shouldSkipSpringInjectionWhenDependenciesAreAlreadyInjected() {
