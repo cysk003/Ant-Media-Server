@@ -733,18 +733,18 @@ public class CommonRestService {
 
 	public String getSystemResourcesInfo() {
 
-		AdminApplication application = getApplication();
-		IScope rootScope = application.getRootScope();
+		AdminApplication app = getApplication();
+		IScope rootScope = app.getRootScope();
 
 		//add live stream size
 		int totalLiveStreams = 0;
 		Queue<IScope> scopes = new LinkedList<>();
-		List<String> appNames = application.getApplications();
+		List<String> appNames = app.getApplications();
 		for (String name : appNames) 
 		{
 			IScope scope = rootScope.getScope(name);
 			scopes.add(scope);
-			totalLiveStreams += application.getAppLiveStreamCount(scope);
+			totalLiveStreams += app.getAppLiveStreamCount(scope);
 		}
 
 		JsonObject jsonObject = StatsCollector.getSystemResourcesInfo(scopes);
@@ -868,10 +868,10 @@ public class CommonRestService {
 	public AntMediaApplicationAdapter getAppAdaptor(String appName) {
 
 		AntMediaApplicationAdapter appAdaptor = null;
-		AdminApplication application = getApplication();
-		if (application != null) 
+		AdminApplication app = getApplication();
+		if (app != null)
 		{
-			ApplicationContext context = application.getApplicationContext(appName);
+			ApplicationContext context = app.getApplicationContext(appName);
 			if (context != null) 
 			{
 				appAdaptor = (AntMediaApplicationAdapter) context.getBean(AntMediaApplicationAdapter.BEAN_NAME);

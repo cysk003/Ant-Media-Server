@@ -1,33 +1,29 @@
 package io.antmedia.test.console;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.times;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
 import com.google.gson.JsonObject;
+import io.antmedia.AntMediaApplicationAdapter;
+import io.antmedia.AppSettings;
+import io.antmedia.cluster.IClusterNotifier;
+import io.antmedia.cluster.IClusterStore;
+import io.antmedia.console.AdminApplication;
+import io.antmedia.console.datastore.ConsoleDataStoreFactory;
+import io.antmedia.console.datastore.MapDBStore;
+import io.antmedia.console.rest.CommonRestService;
+import io.antmedia.console.rest.RestServiceV2;
+import io.antmedia.console.rest.SupportRequest;
+import io.antmedia.console.rest.SupportRestService;
+import io.antmedia.datastore.db.types.User;
+import io.antmedia.datastore.db.types.UserType;
+import io.antmedia.licence.ILicenceService;
+import io.antmedia.rest.model.Result;
+import io.antmedia.settings.ServerSettings;
+import io.antmedia.statistic.IStatsCollector;
+import io.antmedia.statistic.StatsCollector;
+import io.vertx.core.Vertx;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import org.awaitility.Awaitility;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.Rule;
@@ -43,28 +39,28 @@ import org.red5.server.api.scope.IScope;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
 
-import io.antmedia.AntMediaApplicationAdapter;
-import io.antmedia.AppSettings;
-import io.antmedia.cluster.IClusterNotifier;
-import io.antmedia.cluster.IClusterStore;
-import io.antmedia.console.AdminApplication;
-import io.antmedia.console.datastore.ConsoleDataStoreFactory;
-import io.antmedia.console.datastore.MapDBStore;
-import io.antmedia.console.rest.CommonRestService;
-import io.antmedia.console.rest.RestServiceV2;
-import io.antmedia.console.rest.SupportRequest;
-import io.antmedia.console.rest.SupportRestService;
-import io.antmedia.datastore.db.types.User;
-import io.antmedia.licence.ILicenceService;
-import io.antmedia.rest.model.Result;
-import io.antmedia.datastore.db.types.UserType;
-import io.antmedia.settings.ServerSettings;
-import io.antmedia.statistic.IStatsCollector;
-import io.antmedia.statistic.StatsCollector;
-import io.vertx.core.Vertx;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
-import org.webrtc.SessionDescription;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
 
 
 public class ConsoleRestV2UnitTest {
@@ -78,24 +74,6 @@ public class ConsoleRestV2UnitTest {
 	public static final String USER_EMAIL = "user.email";
 
 	public static final String IS_AUTHENTICATED = "isAuthenticated";
-
-	private static final int OFFSET_NOT_USED = -1;
-	private static final int MAX_OFFSET_SIZE = 10000000;
-	private static final int MAX_CHAR_SIZE = 512000;
-	private static final int MIN_CHAR_SIZE = 10;
-	private static final int MIN_OFFSET_SIZE = 10;
-	private static final String LOG_CONTENT = "logContent";
-	private static final String LOG_SIZE = "logSize";
-	private static final String LOG_CONTENT_RANGE = "logContentRange";
-	private static final float MEGABYTE = 1024f * 1024f;
-	private static final String MB_STRING = "%.2f MB";
-	private static final String LOG_TYPE_TEST = "test";
-	private static final String LOG_TYPE_RANDOM = "random";
-	private static final String TEST_LOG_LOCATION = "target/test-classes/ant-media-server.log";
-	private static final String FILE_NOT_EXIST = "There are no registered logs yet";
-	private static final String CREATED_FILE_TEXT = "2019-04-24 19:01:24,291 [main] INFO  org.red5.server.Launcher - Ant Media Server Enterprise 1.7.0-SNAPSHOT\n" +
-			"2019-04-24 19:01:24,334 [main] INFO  o.s.c.s.FileSystemXmlApplicationContext - Refreshing org.springframework.context.support.FileSystemXmlApplicationContext@f0f2775: startup date [Wed Apr 24 19:01:24 EET 2019]; root of context hierarchy";
-
 
 	@Rule
 	public TestRule watcher = new TestWatcher() {
@@ -112,7 +90,7 @@ public class ConsoleRestV2UnitTest {
 	};
 	
 	@BeforeEach
-	public void before() {
+	void before() {
 		File f = new File("server.db");
 		if (f.exists()) {
 			try {
@@ -128,7 +106,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@AfterEach
-	public void after() {
+	void after() {
 		// dbStore.clear();
 		dbStore.close();
 		vertx.close();
@@ -143,7 +121,7 @@ public class ConsoleRestV2UnitTest {
 		}
 	}
 	@Test
-	public void getUserList(){
+	void getUserList(){
 		String password = "password";
 		String userName = "username" + (int) (Math.random() * 1000000000);
 		User user = new User(userName, password, UserType.ADMIN, "all", null);
@@ -169,7 +147,7 @@ public class ConsoleRestV2UnitTest {
 
 
 	@Test
-	public void testAddUser() {
+	void testAddUser() {
 
 		String password = "password";
 		String userName = "username" + (int) (Math.random() * 1000000000);
@@ -223,7 +201,7 @@ public class ConsoleRestV2UnitTest {
 	private volatile boolean err;
 
 	@Test
-	public void testMultipleThreads() {
+	void testMultipleThreads() {
 
 		Thread thread = null;
 		err = false;
@@ -266,7 +244,7 @@ public class ConsoleRestV2UnitTest {
 	}
 	
 	@Test
-	public void testSupportRequest() {
+	void testSupportRequest() {
 		SupportRestService supportRestService = Mockito.spy(new SupportRestService());
 		
 		SupportRequest supportRequest = new SupportRequest();
@@ -287,7 +265,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testSendInfo() {
+	void testSendInfo() {
 		RestServiceV2 restServiceSpy = Mockito.spy(restService);
 
 		Mockito.doReturn(new ServerSettings()).when(restServiceSpy).getServerSettings();
@@ -301,7 +279,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testGetStatsCollector() {
+	void testGetStatsCollector() {
 		IStatsCollector statsCollector = Mockito.mock(IStatsCollector.class);
 
 		restService.setStatsCollector(statsCollector);
@@ -311,7 +289,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testGetServerSettingsInternal() {
+	void testGetServerSettingsInternal() {
 		ServerSettings serverSettings = Mockito.mock(ServerSettings.class);
 
 		restService.setServerSettings(serverSettings);
@@ -322,7 +300,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testGetLicenseService() {
+	void testGetLicenseService() {
 		ILicenceService licenceService = Mockito.mock(ILicenceService.class);
 		assertNull(restService.getLicenceStatus());
 		assertNull(restService.getLicenceStatus("licence-key"));
@@ -334,7 +312,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testGetApplication() {
+	void testGetApplication() {
 		AdminApplication application = Mockito.mock(AdminApplication.class);
 
 		restService.setApplication(application);
@@ -344,7 +322,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testDataStoreFactory() {
+	void testDataStoreFactory() {
 		ConsoleDataStoreFactory dataStoreFactory = Mockito.mock(ConsoleDataStoreFactory.class);
 		Mockito.when(dataStoreFactory.getDataStore()).thenReturn(dbStore);
 
@@ -356,7 +334,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testIsClusterMode() {
+	void testIsClusterMode() {
 		RestServiceV2 restServiceSpy = Mockito.spy(restService);
 
 		Mockito.doReturn(null).when(restServiceSpy).getContext();
@@ -371,7 +349,7 @@ public class ConsoleRestV2UnitTest {
 	
 
 	@Test
-	public void testUploadApplication(){
+	void testUploadApplication(){
 		FileInputStream inputStream;
 		try{
 			inputStream = new FileInputStream("src/test/resources/sample_MP4_480.mp4");
@@ -553,7 +531,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testChangePassword() {
+	void testChangePassword() {
 
 		String password = "password";
 		String userName = "username" + (int) (Math.random() * 100000);
@@ -608,7 +586,7 @@ public class ConsoleRestV2UnitTest {
 
 	}
 	@Test
-	public void testEditUser(){
+	void testEditUser(){
 
 		String password = "password";
 		String userName = "username" + (int) (Math.random() * 100000);
@@ -657,7 +635,7 @@ public class ConsoleRestV2UnitTest {
 	}
 	
 	@Test
-	public void testInvalidateSession() {
+	void testInvalidateSession() {
 		HttpSession session = Mockito.mock(HttpSession.class);
 		HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
 
@@ -673,7 +651,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testDeleteUser() {
+	void testDeleteUser() {
 		String password = "password";
 		String userName = "username" + (int) (Math.random() * 100000);
 		User user = new User(userName, password, UserType.ADMIN, "all", null);
@@ -714,7 +692,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testDeleteApplication() {
+	void testDeleteApplication() {
 
 		RestServiceV2 restServiceSpy = Mockito.spy(restService);
 
@@ -748,7 +726,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testLiveness() {
+	void testLiveness() {
 		RestServiceV2 restServiceSpy = Mockito.spy(restService);
 
 		Response liveness = restServiceSpy.liveness();
@@ -761,7 +739,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testResetBroadcast() {
+	void testResetBroadcast() {
 		RestServiceV2 restServiceSpy = Mockito.spy(restService);
 
 		AntMediaApplicationAdapter adapter = Mockito.mock(AntMediaApplicationAdapter.class);
@@ -785,7 +763,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testShutDownStatus() {
+	void testShutDownStatus() {
 		RestServiceV2 restServiceSpy = Mockito.spy(restService);
 		AntMediaApplicationAdapter adaptor = Mockito.mock(AntMediaApplicationAdapter.class);
 
@@ -797,7 +775,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testExtractFQDN() {
+	void testExtractFQDN() {
 		String domain = CommonRestService.extractFQDN("http://example.com/path/to/page.html");
 		assertEquals("example.com", domain);
 
@@ -821,7 +799,7 @@ public class ConsoleRestV2UnitTest {
 	}
 	
 	@Test
-	public void testTriggerGC() {
+	void testTriggerGC() {
 		//just increase coverage and make sure that method is there.
 		//It's better to check if it calls System.gc. We may add it later with Powermockito. It's good enough at this stage 
 		RestServiceV2 restServiceSpy = Mockito.spy(restService);
@@ -830,7 +808,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testConfigureSSL() 
+	void testConfigureSSL()
 	{
 		RestServiceV2 restServiceSpy = Mockito.spy(restService);
 		AdminApplication adminApp = Mockito.mock(AdminApplication.class);
@@ -962,7 +940,7 @@ public class ConsoleRestV2UnitTest {
 	}
 
 	@Test
-	public void testAuthenticateMultiAppUser(){
+	void testAuthenticateMultiAppUser(){
 		
 		String password = "password";
 		
@@ -1003,7 +981,7 @@ public class ConsoleRestV2UnitTest {
 
 
 	@Test
-	public void testAppStatus(){
+	void testAppStatus(){
 		FileInputStream inputStream;
 		try{
 			inputStream = new FileInputStream("src/test/resources/sample_MP4_480.mp4");
